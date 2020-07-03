@@ -1,0 +1,10 @@
+.container{
+    display: flex;
+    width: 900px;
+    margin: auto;
+    
+}
+canvas{
+    background: #888;
+}
+
