@@ -7,7 +7,7 @@ class Box{
         this.neighbors=[];
         this.cameFrom=[];
         this.color = 'white';
-        this.reachable=true;
+        this.isReachable=true;
     }
     draw(){
         ctx.fillStyle = this.color;
@@ -16,11 +16,11 @@ class Box{
         ctx.strokeRect(this.posX,this.posY,this.width,this.heigth);
     }
     togleObstacle(){
-        if(this.reachable){
-            this.reachable=false;
+        if(this.isReachable){
+            this.isReachable=false;
             this.color='gray';
         }else{
-            this.reachable=true;
+            this.isReachable=true;
             this.color='white';
         }
     }
@@ -29,7 +29,7 @@ Grid={
     boxes:[],
     mod:'findPath',
     startPoint:'',
-    init(){
+    init(){//create and draw boxes
         posX=0;
         posY=0;
         for(let i=0;i<6;i++){
@@ -45,20 +45,24 @@ Grid={
             }
         }
         this.startPoint = this.boxes[0][0];
-        this.getNeighbors();
+        this.getNeighborsForBoxes();
     },
-    setStartPoint(startPoint){
+    setStartPoint(box){
         this.reset();
-        this.startPoint = startPoint;
-        this.startPoint.color = 'red';
+        if(box.isReachable){
+            this.startPoint = box;
+            this.startPoint.color = 'red';
+        }
     },
-    getNeighbors(){
+    getNeighborsForBoxes(){
         for(let i=0;i<this.boxes.length;i++){
             for(let j=0;j<this.boxes[i].length;j++){
-                if(i>0) this.boxes[i][j].neighbors.push(this.boxes[i-1][j]);
-                if(j<7)this.boxes[i][j].neighbors.push(this.boxes[i][j+1]);
-                if(i<5)this.boxes[i][j].neighbors.push(this.boxes[i+1][j]);
-                if(j>0)this.boxes[i][j].neighbors.push(this.boxes[i][j-1]);
+                let box = this.boxes[i][j];
+                if(i>0) box.neighbors.push(this.boxes[i-1][j]);
+                if(j>0)box.neighbors.push(this.boxes[i][j-1]);
+                if(j<this.boxes[i].length-1)box.neighbors.push(this.boxes[i][j+1]);
+                if(i<this.boxes.length-1)box.neighbors.push(this.boxes[i+1][j]);
+                
             }
         }    
     },
@@ -72,17 +76,18 @@ Grid={
     isBoxPressed(mouseX,mouseY){
         for(let i=0;i<this.boxes.length;i++){
             for(let j=0;j<this.boxes[i].length;j++){
-                    let posX = this.boxes[i][j].posX;
-                    let posY = this.boxes[i][j].posY;
-                    if((mouseX>=posX && mouseX<=posX+100)&&
+                let box = this.boxes[i][j];
+                let posX = box.posX;
+                let posY = box.posY;
+                if((mouseX>=posX && mouseX<=posX+100)&&//if click was within box borders    
                     (mouseY>=posY && mouseY<=posY+100)){
                         this.reset();  
                         if(this.mod==='createObstacle'){
-                            this.boxes[i][j].togleObstacle();
+                            box.togleObstacle();
                         } else if(this.mod==='findPath'){
-                            this.findPath(this.boxes[i][j]);
+                            this.findPath(box);
                         }else if(this.mod==='setStart'){
-                            this.setStartPoint(this.boxes[i][j]);
+                            this.setStartPoint(box);
                         }                        
                     }
                              
@@ -92,9 +97,10 @@ Grid={
     reset(){
         for(let i=0;i<this.boxes.length;i++){
             for(let j=0;j<this.boxes[i].length;j++){
-                this.boxes[i][j].cameFrom.length=0;
-                if(this.boxes[i][j].reachable){
-                    this.boxes[i][j].color='white';
+                let box = this.boxes[i][j];
+                box.cameFrom.length=0;
+                if(box.isReachable){
+                    box.color='white';
                 }
                 
             }
@@ -114,7 +120,7 @@ Grid={
                 });
                 break;
             }else{  box.neighbors.forEach(element => {
-                    if (!visited.includes(element)&&element.reachable){
+                    if (!visited.includes(element)&&element.isReachable){
                             element.cameFrom.push(box);
                             element.cameFrom = element.cameFrom.concat(box.cameFrom);
                             frontier.push(element);
